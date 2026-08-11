@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: civic_eye
+      POSTGRES_USER: civic_eye
+      POSTGRES_PASSWORD: civic_eye_dev
+    ports: ["5432:5432"]
+    volumes: [civic_eye_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civic_eye"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://civic_eye:civic_eye_dev@db:5432/civic_eye
+      MEDIA_ROOT: /app/media
+      CORS_ORIGINS: "*"
+    ports: ["8002:8002"]
+    volumes: [./backend/media:/app/media]
+    depends_on:
+      db: {condition: service_healthy}
+volumes:
+  civic_eye_db:
